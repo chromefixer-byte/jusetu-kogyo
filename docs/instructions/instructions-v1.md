@@ -67,7 +67,7 @@ HuggingFaceのモデルカード（cl-nagoya/ruri-v3-310m）を正として照�
 ### Claude API
 
 - 環境変数: `ANTHROPIC_API_KEY`
-- モデル: claude-sonnet-4-6（コスト効率）
+- モデル: claude-haiku-4-5-20251001（予算$2・Haiku 4.5で十分な難易度）
 - プロンプト要件: 「出典の章・条番号を必ず明示、根拠がなければ『該当なし』と答える」
 
 ## 作業手順
