@@ -8,16 +8,19 @@
 
 ## セットアップ
 
+**注意：埋め込みモデル（ruri-v3-310m）はHuggingFaceからダウンロードするため、インターネット接続が必要です。
+Claude Code Remote環境ではhuggingface.coへのアクセスがブロックされる場合があります。その場合はローカル環境で実行してください。**
+
 ```bash
 # 依存パッケージ
 pip install -r requirements.txt
 
-# 素材PDF配置（mlit.go.jpからダウンロード）
+# 素材PDF配置
 mkdir -p data/raw
-curl -L -o data/raw/001888825.pdf \
-  https://www.mlit.go.jp/gobuild/content/001888825.pdf
+# PDFファイル名: 公共建築工事標準仕様書（電気設備工事編）令和７年版.pdf
+# ダウンロード元: https://www.mlit.go.jp/gobuild/content/001888825.pdf
 
-# APIキー設定（console.anthropic.com で発行。Maxプランとは別）
+# APIキー設定（console.anthropic.com で発行。Maxプランとは別課金）
 export ANTHROPIC_API_KEY=sk-...
 ```
 
