@@ -24,7 +24,7 @@ data/raw/      素材PDF（.gitignore）
 ## 環境
 
 - Python 3.10+
-- ANTHROPIC_API_KEY 環境変数必須
+- OPENROUTER_API_KEY 環境変数必須（OpenRouter経由でLLM生成）
 - GPU不要（ruri-v3-310mはCPUで動作可能）
 
 ## 素材PDF
