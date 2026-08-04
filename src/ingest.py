@@ -27,8 +27,13 @@ DOC_PREFIX = "文章: "
 
 
 def _load_model():
+    import os
+    import torch
     from sentence_transformers import SentenceTransformer
-    logger.info("Loading embedding model: %s", MODEL_NAME)
+    # Use all available CPU cores for PyTorch inference.
+    n_threads = os.cpu_count() or 4
+    torch.set_num_threads(n_threads)
+    logger.info("Loading embedding model: %s (threads=%d)", MODEL_NAME, n_threads)
     model = SentenceTransformer(MODEL_NAME)
     logger.info("Model loaded.")
     return model
@@ -37,7 +42,7 @@ def _load_model():
 def _embed_chunks(model, chunks: list[dict]) -> list[list[float]]:
     texts = [DOC_PREFIX + c["heading"] + "\n" + c["body"] for c in chunks]
     logger.info("Embedding %d chunks with doc prefix...", len(texts))
-    embeddings = model.encode(texts, batch_size=32, show_progress_bar=True, normalize_embeddings=True)
+    embeddings = model.encode(texts, batch_size=8, show_progress_bar=True, normalize_embeddings=True)
     return embeddings.tolist()
 
 
