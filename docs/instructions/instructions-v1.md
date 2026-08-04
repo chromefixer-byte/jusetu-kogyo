@@ -64,11 +64,14 @@
 HuggingFaceのモデルカード（cl-nagoya/ruri-v3-310m）を正として照合すること。
 文書側・クエリ側のプレフィックスが異なる場合があるため、付け忘れ防止のユニットテストを必ず書く。
 
-### Claude API
+### LLM生成（OpenRouter経由）
 
-- 環境変数: `ANTHROPIC_API_KEY`
-- モデル: claude-haiku-4-5-20251001（予算$2・Haiku 4.5で十分な難易度）
+- 環境変数: `OPENROUTER_API_KEY`
+- ベースURL: `https://openrouter.ai/api/v1`
+- モデル: `anthropic/claude-haiku-4.5`（既存クレジット内・追加課金なし）
+- ライブラリ: `openai`（OpenAI互換API）
 - プロンプト要件: 「出典の章・条番号を必ず明示、根拠がなければ『該当なし』と答える」
+- 設計判断: Anthropic直接APIではなくOpenRouterを採用した理由をREADMEに記載すること（コスト選択性の展示）
 
 ## 作業手順
 
@@ -87,7 +90,7 @@ requirements.txtの主要パッケージ:
 - pdfplumber, PyMuPDF (pymupdf)
 - llama-index, chromadb
 - sentence-transformers (ruri-v3-310mの実行用)
-- anthropic
+- openai（OpenRouter互換クライアント）
 
 ### Step 2: extract（突合抽出）
 
@@ -113,7 +116,7 @@ requirements.txtの主要パッケージ:
 
 1. 質問を受け取り、ruri-v3-310mで埋め込み（クエリ側プレフィックス）
 2. Chromaから上位k=3件を検索
-3. Claude APIで回答生成（出典必須プロンプト）
+3. OpenRouter経由でLLM回答生成（出典必須プロンプト）
 4. 回答と出典を表示
 
 ### Step 6: eval
