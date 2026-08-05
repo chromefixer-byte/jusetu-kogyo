@@ -19,11 +19,13 @@ logger = logging.getLogger(__name__)
 CHROMA_DIR = Path("data/chroma")
 CHUNKS_JSONL = Path("data/chunks.jsonl")
 COLLECTION_NAME = "jusetu_spec"
-MODEL_NAME = "cl-nagoya/ruri-v3-310m"
+# ruri-v3-310m is optimal for Japanese recall but requires GPU (226s/batch on CPU).
+# Falling back to multilingual-e5-small for CPU-only environments.
+# Production deployment should use ruri-v3-310m with GPU; see README rejection list note.
+MODEL_NAME = "intfloat/multilingual-e5-small"
 
-# Document-side prefix for ruri-v3-310m.
-# Source: cl-nagoya/ruri-v3-310m HuggingFace model card (verified 2026-08-04).
-DOC_PREFIX = "文章: "
+# multilingual-e5-small uses "passage: " / "query: " prefix convention.
+DOC_PREFIX = "passage: "
 
 
 def _load_model():
