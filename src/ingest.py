@@ -19,23 +19,16 @@ logger = logging.getLogger(__name__)
 CHROMA_DIR = Path("data/chroma")
 CHUNKS_JSONL = Path("data/chunks.jsonl")
 COLLECTION_NAME = "jusetu_spec"
-# ruri-v3-310m is optimal for Japanese recall but requires GPU (226s/batch on CPU).
-# Falling back to multilingual-e5-small for CPU-only environments.
-# Production deployment should use ruri-v3-310m with GPU; see README rejection list note.
-MODEL_NAME = "intfloat/multilingual-e5-small"
+MODEL_NAME = "cl-nagoya/ruri-v3-310m"
 
-# multilingual-e5-small uses "passage: " / "query: " prefix convention.
-DOC_PREFIX = "passage: "
+# Document-side prefix for ruri-v3-310m.
+# Source: cl-nagoya/ruri-v3-310m HuggingFace model card (verified 2026-08-04).
+DOC_PREFIX = "文章: "
 
 
 def _load_model():
-    import os
-    import torch
     from sentence_transformers import SentenceTransformer
-    # Use all available CPU cores for PyTorch inference.
-    n_threads = os.cpu_count() or 4
-    torch.set_num_threads(n_threads)
-    logger.info("Loading embedding model: %s (threads=%d)", MODEL_NAME, n_threads)
+    logger.info("Loading embedding model: %s", MODEL_NAME)
     model = SentenceTransformer(MODEL_NAME)
     logger.info("Model loaded.")
     return model
@@ -44,7 +37,7 @@ def _load_model():
 def _embed_chunks(model, chunks: list[dict]) -> list[list[float]]:
     texts = [DOC_PREFIX + c["heading"] + "\n" + c["body"] for c in chunks]
     logger.info("Embedding %d chunks with doc prefix...", len(texts))
-    embeddings = model.encode(texts, batch_size=8, show_progress_bar=True, normalize_embeddings=True)
+    embeddings = model.encode(texts, batch_size=64, show_progress_bar=True, normalize_embeddings=True)
     return embeddings.tolist()
 
 

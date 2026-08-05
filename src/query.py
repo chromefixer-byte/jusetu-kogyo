@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 
 CHROMA_DIR = Path("data/chroma")
 COLLECTION_NAME = "jusetu_spec"
-MODEL_NAME = "intfloat/multilingual-e5-small"
+MODEL_NAME = "cl-nagoya/ruri-v3-310m"
 CLAUDE_MODEL = "claude-sonnet-4-6"
 
-# multilingual-e5-small uses "query: " prefix on the query side.
-QUERY_PREFIX = "query: "
+# Query-side prefix for ruri-v3-310m.
+# Source: cl-nagoya/ruri-v3-310m HuggingFace model card (verified 2026-08-04).
+QUERY_PREFIX = "クエリ: "
 
 _SYSTEM_PROMPT = """\
 あなたは公共建築工事標準仕様書（電気設備工事編）の専門アシスタントです。

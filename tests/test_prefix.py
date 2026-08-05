@@ -1,22 +1,24 @@
 """
-Unit tests for multilingual-e5-small prefix correctness.
+Unit tests for ruri-v3-310m prefix correctness.
 
-Why this test exists: e5 models require distinct prefixes on the document side
-("passage: ") vs. the query side ("query: "). Swapping them degrades retrieval.
-This test catches prefix typos and ensures both sides are applied consistently.
+Why this test exists: ruri models require different prefixes on the query side vs.
+the document side. Applying the wrong prefix (or no prefix) degrades retrieval
+accuracy. This test catches prefix typos and ensures both sides are applied.
 
-Source: intfloat/multilingual-e5-small model card on HuggingFace.
-Note: ruri-v3-310m (originally planned) requires GPU; falling back to
-multilingual-e5-small for CPU-only environments. See README for details.
+The expected prefix values are sourced from the cl-nagoya/ruri-v3-310m model card.
+If the model card changes, update DOC_PREFIX / QUERY_PREFIX in ingest.py / query.py
+AND update this test.
 """
 import sys
 from pathlib import Path
 
+import pytest
+
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-EXPECTED_DOC_PREFIX = "passage: "
-EXPECTED_QUERY_PREFIX = "query: "
+EXPECTED_DOC_PREFIX = "文章: "
+EXPECTED_QUERY_PREFIX = "クエリ: "
 
 
 def test_doc_prefix_value():
