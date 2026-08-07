@@ -23,7 +23,7 @@
   - `LLM_PROVIDER`=`openrouter`（既定）／`anthropic`
   - `LLM_MODEL`=モデルID
   - `OPENROUTER_API_KEY` または `ANTHROPIC_API_KEY`
-- M1〜M3はラ・ルキエラ（CPU）で実施。M4（MinerU）のみフラン（RTX 5060 Ti）で実施
+- 全マイルストーンを自宅デスクトップ（RTX 5060 Ti 16GB）で実施
 
 ## 素材PDF
 
