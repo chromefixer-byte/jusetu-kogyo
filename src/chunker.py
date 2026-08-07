@@ -28,6 +28,25 @@ _ARTICLE_RE = re.compile(r"^(\d+\.\d+\.\d+)\s+(.*)")
 # Item-level split boundary inside a large chunk
 _ITEM_RE = re.compile(r"^\s*\(\d+\)")
 
+# Cross-reference extraction patterns (deterministic, LLM-free)
+_REF_ARTICLE_RE = re.compile(r"(\d+\.\d+\.\d+)「[^」]+」")
+_REF_TABLE_RE = re.compile(r"(表\d+\.\d+(?:\.\d+)?)")
+_REF_CHAPTER_RE = re.compile(r"(第\d+編第\d+章)")
+
+
+def _extract_refs(body: str) -> list[str]:
+    refs = []
+    refs.extend(m.group(1) for m in _REF_ARTICLE_RE.finditer(body))
+    refs.extend(m.group(1) for m in _REF_TABLE_RE.finditer(body))
+    refs.extend(m.group(1) for m in _REF_CHAPTER_RE.finditer(body))
+    seen: set[str] = set()
+    result = []
+    for r in refs:
+        if r not in seen:
+            seen.add(r)
+            result.append(r)
+    return result
+
 
 def _build_hierarchy(hen: str, sho: str, setsu: str, article_num: str) -> str:
     parts = [p for p in [hen, sho, setsu, article_num] if p]
@@ -41,25 +60,28 @@ def _make_chunk(
     body: str,
     pages: list[int],
     source_engine: str,
+    domain: str = "",
 ) -> dict:
+    stripped = body.strip()
     return {
         "chunk_id": chunk_id,
         "doc_type": "spec",
+        "domain": domain,
         "hierarchy": hierarchy,
         "heading": heading,
-        "body": body.strip(),
+        "body": stripped,
         "pages": f"{min(pages)}-{max(pages)}" if len(pages) > 1 else str(pages[0]),
-        "char_count": len(body.strip()),
+        "char_count": len(stripped),
         "source_engine": source_engine,
+        "refs": _extract_refs(stripped),
     }
 
 
-def _split_large(body: str, base_heading: str, hierarchy: str, pages: list[int], source_engine: str, base_id: str) -> list[dict]:
+def _split_large(body: str, base_heading: str, hierarchy: str, pages: list[int], source_engine: str, base_id: str, domain: str = "") -> list[dict]:
     """Split a body > SPLIT_THRESHOLD at item (1), (2)... boundaries."""
     item_starts = [m.start() for m in _ITEM_RE.finditer(body)]
     if not item_starts:
-        # No item boundaries found; return as-is with a note
-        return [_make_chunk(base_id, hierarchy, base_heading, body, pages, source_engine)]
+        return [_make_chunk(base_id, hierarchy, base_heading, body, pages, source_engine, domain)]
 
     parts = []
     boundaries = item_starts + [len(body)]
@@ -74,11 +96,11 @@ def _split_large(body: str, base_heading: str, hierarchy: str, pages: list[int],
             continue
         sub_id = f"{base_id}-{j + 1}"
         sub_hierarchy = f"{hierarchy}/{j + 1}" if j > 0 or item_starts[0] > 0 else hierarchy
-        chunks.append(_make_chunk(sub_id, sub_hierarchy, base_heading, part, pages, source_engine))
+        chunks.append(_make_chunk(sub_id, sub_hierarchy, base_heading, part, pages, source_engine, domain))
     return chunks
 
 
-def chunk_pages(pages: list[dict], doc_slug: str = "spec") -> list[dict]:
+def chunk_pages(pages: list[dict], doc_slug: str = "spec", domain: str = "") -> list[dict]:
     """
     Convert arbitrated page dicts into chunk records.
     Returns list of chunk dicts (also written to data/chunks.jsonl by ingest.py).
@@ -106,7 +128,7 @@ def chunk_pages(pages: list[dict], doc_slug: str = "spec") -> list[dict]:
         counter += 1
         chunk_id = f"{doc_slug}-{counter:04d}"
         raw_chunks.append(
-            _make_chunk(chunk_id, hierarchy, heading, body, current_pages or [0], current_engine)
+            _make_chunk(chunk_id, hierarchy, heading, body, current_pages or [0], current_engine, domain)
         )
 
     for page_dict in pages:
@@ -217,6 +239,7 @@ def chunk_pages(pages: list[dict], doc_slug: str = "spec") -> list[dict]:
                     [int(p) for p in chunk["pages"].replace("-", " ").split() if p.isdigit()],
                     chunk["source_engine"],
                     chunk["chunk_id"],
+                    chunk.get("domain", ""),
                 )
                 final_chunks.extend(split)
             else:

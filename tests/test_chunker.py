@@ -35,36 +35,36 @@ SAMPLE_PAGES = [
 def test_chunk_count():
     # Both sample articles are < 300 chars (merge threshold), so they are
     # collapsed into a single chunk under their parent section. >= 1 is correct.
-    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test")
+    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test", domain="electric")
     assert len(chunks) >= 1
 
 
 def test_chunk_has_required_fields():
-    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test")
+    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test", domain="electric")
     for c in chunks:
-        for field in ("chunk_id", "doc_type", "hierarchy", "heading", "body", "pages", "char_count", "source_engine"):
+        for field in ("chunk_id", "doc_type", "domain", "hierarchy", "heading", "body", "pages", "char_count", "source_engine", "refs"):
             assert field in c, f"Missing field: {field}"
 
 
 def test_hierarchy_contains_hen_sho_setsu():
-    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test")
+    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test", domain="electric")
     assert any("第1編" in c["hierarchy"] for c in chunks)
     assert any("第1章" in c["hierarchy"] for c in chunks)
 
 
 def test_article_heading_format():
-    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test")
+    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test", domain="electric")
     articles = [c for c in chunks if "1.1.1" in c["heading"] or "1.1.2" in c["heading"]]
     assert len(articles) >= 1
 
 
 def test_source_engine_preserved():
-    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test")
+    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test", domain="electric")
     engines = {c["source_engine"] for c in chunks}
     assert engines.issubset({"plumber", "pymupdf", "unknown"})
 
 
 def test_doc_type_is_spec():
-    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test")
+    chunks = chunk_pages(SAMPLE_PAGES, doc_slug="test", domain="electric")
     for c in chunks:
         assert c["doc_type"] == "spec"
