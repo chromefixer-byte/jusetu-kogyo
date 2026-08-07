@@ -69,19 +69,81 @@ TOOLS = [
 
 
 _embed_model = None
+_tfidf_index = None  # fallback when model download fails
 
 
 def _get_embed_model():
     global _embed_model
     if _embed_model is None:
-        from sentence_transformers import SentenceTransformer
-
-        _embed_model = SentenceTransformer(MODEL_NAME)
+        try:
+            from sentence_transformers import SentenceTransformer
+            _embed_model = SentenceTransformer(MODEL_NAME)
+        except Exception as exc:
+            logger.warning("Failed to load embedding model (%s); TF-IDF fallback active.", exc)
+            _embed_model = "tfidf"  # sentinel
     return _embed_model
+
+
+def _get_tfidf_index():
+    global _tfidf_index
+    if _tfidf_index is None:
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        import numpy as np
+
+        chunks = []
+        if CHUNKS_JSONL.exists():
+            with open(CHUNKS_JSONL, encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        chunks.append(json.loads(line))
+
+        texts = [c["heading"] + "\n" + c["body"] for c in chunks]
+        vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 4), max_features=30000)
+        matrix = vec.fit_transform(texts)
+        _tfidf_index = {"chunks": chunks, "vectorizer": vec, "matrix": matrix}
+        logger.info("TF-IDF index built (%d chunks)", len(chunks))
+    return _tfidf_index
+
+
+def _search_tfidf(query: str, domain: str | None, top_k: int) -> list[dict]:
+    import numpy as np
+
+    idx = _get_tfidf_index()
+    chunks = idx["chunks"]
+    qvec = idx["vectorizer"].transform([query])
+    scores = (idx["matrix"] @ qvec.T).toarray().flatten()
+
+    if domain:
+        for i, c in enumerate(chunks):
+            if c.get("domain") != domain:
+                scores[i] = -1.0
+
+    top_ids = np.argsort(scores)[::-1][:top_k]
+    hits = []
+    for i in top_ids:
+        if scores[i] <= 0:
+            continue
+        c = chunks[i]
+        hits.append(
+            {
+                "chunk_id": c.get("chunk_id", ""),
+                "hierarchy": c.get("hierarchy", ""),
+                "heading": c.get("heading", ""),
+                "body": c.get("body", ""),
+                "pages": c.get("pages", ""),
+                "domain": c.get("domain", ""),
+                "refs": c.get("refs", []),
+            }
+        )
+    return hits
 
 
 def search_chunks(query: str, domain: str | None = None, top_k: int = 3) -> list[dict]:
     model = _get_embed_model()
+
+    if model == "tfidf":
+        return _search_tfidf(query, domain, top_k)
+
     vec = model.encode([QUERY_PREFIX + query], normalize_embeddings=True).tolist()[0]
 
     import chromadb
