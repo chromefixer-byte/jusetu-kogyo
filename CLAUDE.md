@@ -2,34 +2,32 @@
 
 ## プロジェクト概要
 
-建設業向けRAGシステムのポートフォリオプロジェクト。
-公共建築工事標準仕様書（電気設備工事編）令和7年版を対象とした、CLI型のRAG検索ツール。
+規程エージェント — 仕様書・帳票に根拠付きで答えるエージェントのデモ（ポートフォリオ）。
+単一文書デモの素材は公共建築工事標準仕様書（電気設備工事編）令和7年版。
 
 ## 作業指示
 
-docs/instructions/instructions-v1.md を読んでから着工すること。
+マイルストーン（M1〜M4）ごとに docs/instructions/ に指示書が発行される。
+現行の指示書を読んでから着工すること。指示書がない場合は着工せず待機。
 
-## リポジトリ構成
+## 正典文書
 
-```
-src/extract/   PDF抽出（plumber, pymupdf, arbiter）
-src/chunker.py チャンク分割
-src/ingest.py  埋め込み・Chroma格納
-src/query.py   検索・回答生成
-eval/          評価（questions.jsonl, run_eval.py）
-docs/          仕様書・指示書
-data/raw/      素材PDF（.gitignore）
-```
+- docs/requirements-v0.5.md（統合定義書）
+- docs/data-definition-v0.4.md（データ定義書）
+- docs/spec-v0.3.md（実装仕様書）
 
 ## 環境
 
 - Python 3.10+
-- ANTHROPIC_API_KEY 環境変数必須
-- GPU不要（ruri-v3-310mはCPUで動作可能）
+- LLMバックエンド切替式（spec §3.1）:
+  - `LLM_PROVIDER`=`openrouter`（既定）／`anthropic`
+  - `LLM_MODEL`=モデルID
+  - `OPENROUTER_API_KEY` または `ANTHROPIC_API_KEY`
+- M1〜M3はラ・ルキエラ（CPU）で実施。M4（MinerU）のみフラン（RTX 5060 Ti）で実施
 
 ## 素材PDF
 
-data/raw/ に以下を配置:
+data/raw/ に配置:
 https://www.mlit.go.jp/gobuild/content/001888825.pdf
 
 ## 運用規律
